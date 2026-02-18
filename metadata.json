@@ -1,0 +1,5 @@
+{
+  "name": "Pucket - The Fast Sling Game",
+  "description": "A high-speed physics-based slingpuck game where two players compete to clear their side of the board. Features realistic wooden aesthetics, elastic band physics, and local multiplayer action.",
+  "requestFramePermissions": []
+}
