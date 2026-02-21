@@ -27,6 +27,28 @@ const App: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  const sendNetworkMessage = useCallback((msg: NetworkMessage) => {
+    if (connection && connection.open) {
+      connection.send(msg);
+    }
+  }, [connection]);
+
+  const handleGameEnd = useCallback((winner: PlayerSide, broadcast = true) => {
+    setGameState(prev => {
+      if (prev.status === 'winner') return prev;
+      return {
+        ...prev,
+        status: 'winner',
+        winner,
+        score: {
+          ...prev.score,
+          [winner]: prev.score[winner] + 1
+        }
+      };
+    });
+    if (broadcast) sendNetworkMessage({ type: 'win', payload: winner });
+  }, [sendNetworkMessage]);
+
   const handleNetworkMessage = useCallback((msg: NetworkMessage) => {
     if (msg.type === 'start') {
       setGameState(prev => ({ ...prev, status: 'playing', winner: null }));
@@ -35,7 +57,7 @@ const App: React.FC = () => {
     } else if (msg.type === 'win') {
       handleGameEnd(msg.payload, false);
     }
-  }, []);
+  }, [handleGameEnd]);
 
   const setupConnection = useCallback((conn: DataConnection, role: PeerRole) => {
     conn.on('open', () => {
@@ -99,34 +121,16 @@ const App: React.FC = () => {
     setPeerRole(role);
   };
 
-  const sendNetworkMessage = (msg: NetworkMessage) => {
-    if (connection && connection.open) {
-      connection.send(msg);
-    }
-  };
-
-  const handleGameEnd = useCallback((winner: PlayerSide, broadcast = true) => {
-    setGameState(prev => ({
-      ...prev,
-      status: 'winner',
-      winner,
-      score: {
-        ...prev.score,
-        [winner]: prev.score[winner] + 1
-      }
-    }));
-    if (broadcast) sendNetworkMessage({ type: 'win', payload: winner });
-  }, [connection]);
 
   const startGame = useCallback(() => {
     setGameState(prev => ({ ...prev, status: 'playing', winner: null }));
     sendNetworkMessage({ type: 'start', payload: null });
-  }, [connection]);
+  }, [sendNetworkMessage]);
 
   const resetGame = useCallback(() => {
     setGameState(prev => ({ ...prev, status: 'waiting', winner: null }));
     sendNetworkMessage({ type: 'reset', payload: null });
-  }, [connection]);
+  }, [sendNetworkMessage]);
 
   const toggleMode = (m: GameMode) => {
     setMode(m);

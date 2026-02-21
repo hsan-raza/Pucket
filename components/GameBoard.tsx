@@ -218,12 +218,21 @@ const GameBoard: React.FC<GameBoardProps> = ({ status, onWin, isVertical, mode, 
     
     if (side1Pucks === 0 || side2Pucks === 0) {
       const winnerCandidate = side1Pucks === 0 ? 'right' : 'left';
-      if (!winTimerRef.current) {
+      if (!winTimerRef.current && status === 'playing') {
         setPendingSide(winnerCandidate);
-        winTimerRef.current = window.setTimeout(() => { onWin(winnerCandidate); winTimerRef.current = null; }, 1000);
+        winTimerRef.current = window.setTimeout(() => { 
+          onWin(winnerCandidate);
+          // We don't set winTimerRef.current = null here to prevent re-triggering
+          // before the status prop updates to 'winner'.
+          // It will be reset in initPucks() when the next game starts.
+        }, 1000);
       }
     } else {
-      if (winTimerRef.current) { clearTimeout(winTimerRef.current); winTimerRef.current = null; setPendingSide(null); }
+      if (winTimerRef.current) { 
+        clearTimeout(winTimerRef.current); 
+        winTimerRef.current = null; 
+        setPendingSide(null); 
+      }
     }
 
     if (peerRole === 'host' && connection && Date.now() - lastSyncRef.current > 33) {
